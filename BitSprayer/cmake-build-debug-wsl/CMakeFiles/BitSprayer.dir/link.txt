@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/BitSprayer.dir/bitspray.cpp.o CMakeFiles/BitSprayer.dir/stat.cpp.o CMakeFiles/BitSprayer.dir/main.cpp.o  -o BitSprayer 
