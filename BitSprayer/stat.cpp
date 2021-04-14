@@ -73,7 +73,7 @@ void tselect(double *fit,  //fitness
 }
 
 //select a tournament in the first tz spaces of dx  HIGHEST FITNESS FIRST
-void Tselect(double *fit,  //fitness
+void Tselect(int *fit,  //fitness
              int *dx,      //sorting index
              int tz,       //tournament size
              int pz) {//population size

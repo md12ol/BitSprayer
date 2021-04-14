@@ -24,7 +24,7 @@ void tselect(double *fit,  //fitness
              int pz);      //population size
 
 //select a tournament in the first tz spaces of dx; highest fitness first
-void Tselect(double *fit,  //fitness
+void Tselect(int *fit,  //fitness
              int *dx,      //sorting index
              int tz,       //tournament size
              int pz);      //population size

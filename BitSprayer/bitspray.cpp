@@ -17,12 +17,14 @@ bitspray::bitspray() {//creates an unallocated bitspray
 }
 
 bitspray::bitspray(int S) {//create buffer size B, states S
-  St = 0;     //mark as unallocated
+  init = St = cs = 0;
+  trans = resp = nullptr;
   create(S);  //allocate a bitspray with B buffer and S states
 }
 
 bitspray::bitspray(bitspray &other) {//copy constructor
-  St = 0;         //mark as unallocated
+  init = St = cs = 0;
+  trans = resp = nullptr;
   copy(other);  //call the copy routine
 }
 

@@ -5,16 +5,18 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
+#include <vector>
 
 using namespace std;
 
 #include "../BitSprayer/stat.h"
 #include "../BitSprayer/bitspray.h"
 #include "ps.h"
+#include "setu.h"
 #define RNS 91207819
 
-#define runs 30
-#define mevs 10000
+#define runs 5
+#define mevs 1000
 #define RI 100
 #define popsize 100
 #define tsize 7
@@ -44,22 +46,29 @@ void matingevent();            //run a mating event
 void report(ostream &aus);     //report current summary statistics
 void render(int run);          //render a picture
 double reportbest(ostream &aus, int run); //report current best creature
+void printGraph(int run);
+void printBoard(int run);
+int getRoomNm(int x, int y);
+void printDoors(int run);
 
-bitspray pop[popsize];  //Population of bitsprayers
+bitspray *pop[popsize];  //Population of bitsprayers
 double fit[popsize];  //Fitness values
 int dx[popsize];  //Sorting index
+
+graph *G;
 
 int main() {
   fstream stat;   //statistics reporting stream
   fstream best;   //best reporting stream
   char fn[100];
   double sum = 0.0;   //sum of best fitness from each run
+  G = new graph(Rz);
 
   initalg();
-  best.open("best.sda", ios::out);
+  best.open("Output/best.sda", ios::out);
   for (int run = 0; run < runs; run++) {
     cout << "Run=" << run << endl;
-    sprintf(fn, "run%02d.dat", run);
+    sprintf(fn, "Output/run%02d.dat", run);
     stat.open(fn, ios::out);
     initpop();
     report(stat);
@@ -68,15 +77,16 @@ int main() {
       if ((mev + 1) % RI == 0) {
         if (verbose == 1) {
           cout << run << " " << (mev + 1) / RI << " ";
-          report(stat);
         }
+        report(stat);
       }
     }
     stat.close();
     sum += reportbest(best, run);
   }
-  cout << sum / runs << endl;
+  cout << "Mean fitness: " << sum / runs << endl;
   best.close();
+//  delete G;
   return (0);
 }
 
@@ -92,15 +102,15 @@ void developQ(bitspray &A) {//unpack the queue
 void initalg() {
   srand48(RNS);
   for (int i = 0; i < popsize; i++) {
-    pop[i].create(states);
+    pop[i] = new bitspray(states);
   }
 }
 
 void initpop() {
   cout << "Initial population fitness values" << endl;
   for (int i = 0; i < popsize; i++) {
-    pop[i].randomize();
-    fit[i] = fitness(pop[i]);
+    pop[i]->randomize();
+    fit[i] = fitness(*pop[i]);
     cout << fit[i] << " ";
     dx[i] = i;
   }
@@ -113,6 +123,7 @@ void clearboard() {
       Bd[i][j] = 0;
     }
   }
+  G->empty(Rz);
 }
 
 void fill(int a, int b, int da, int db) {
@@ -133,7 +144,7 @@ bool available(int a, int b, int da, int db) {
   return true;
 }
 
-bool getnum(int &val, int bits, int &psn) {//get a number from the queue
+bool getbit(int &val, int bits, int &psn) {//get a number from the queue
   if (psn + bits >= Qz) return false; //safety first
   val = 0;  //zero the value
   for (int i = 0; i < bits; i++)
@@ -161,12 +172,12 @@ double fitness(bitspray &A) {
   fill(Rx[0], Ry[0], Dx[0], Dy[0]);
   cnr = 1;
   psn = 0;
-  while (cnr < Rz && getnum(rmn, 8, psn)) {
+  while (cnr < Rz && getbit(rmn, 8, psn)) {
     rmn = rmn % cnr;  //get an already created room
-    if (!getnum(side, 2, psn)) break;
-    if (!getnum(typ, 3, psn)) break;
-    if (!getnum(slide, 4, psn)) break;
-    if (!getnum(ttlz, 4, psn)) break;
+    if (!getbit(side, 2, psn)) break;
+    if (!getbit(typ, 3, psn)) break;
+    if (!getbit(slide, 4, psn)) break;
+    if (!getbit(ttlz, 4, psn)) break;
 
     if (typ == 0) {  //hallway
       if (side < 2) { //horizontal hallway
@@ -198,7 +209,9 @@ double fitness(bitspray &A) {
         b = Ry[rmn] - db;
         a = Rx[rmn] + slide % Dx[rmn];
         break;
-    } //end switch
+      default:
+        break;
+    } //end switch00
 
     if (available(a, b, da, db)) {  //room available
       fill(a, b, da, db);
@@ -206,6 +219,7 @@ double fitness(bitspray &A) {
       Ry[cnr] = b;
       Dx[cnr] = da;
       Dy[cnr] = db;
+      G->add(rmn, cnr);
       cnr++;
     }
   }
@@ -238,15 +252,15 @@ void matingevent() {
   int nm;
 
   tselect(fit, dx, tsize, popsize);
-  pop[dx[0]].copy(pop[dx[tsize - 2]]);
-  pop[dx[1]].copy(pop[dx[tsize - 1]]);
-  pop[dx[0]].tpc(pop[dx[1]]);
-  nm = lrand48() % MNM + 1;
-  pop[dx[0]].mutate(nm);
-  nm = lrand48() % MNM + 1;
-  pop[dx[1]].mutate(nm);
-  fit[dx[0]] = fitness(pop[dx[0]]);
-  fit[dx[1]] = fitness(pop[dx[1]]);
+  pop[dx[0]]->copy(*pop[dx[tsize - 2]]);
+  pop[dx[1]]->copy(*pop[dx[tsize - 1]]);
+  pop[dx[0]]->tpc(*pop[dx[1]]);
+  nm = (int) lrand48() % MNM + 1;
+  pop[dx[0]]->mutate(nm);
+  nm = (int) lrand48() % MNM + 1;
+  pop[dx[1]]->mutate(nm);
+  fit[dx[0]] = fitness(*pop[dx[0]]);
+  fit[dx[1]] = fitness(*pop[dx[1]]);
 }
 
 void report(ostream &aus) {
@@ -262,7 +276,7 @@ void report(ostream &aus) {
 
 void render(int run) {
   char fn[60];
-  sprintf(fn, "Dungeon%02d.eps", run);
+  sprintf(fn, "Output/Dungeons/Dungeon%02d.eps", run);
   psDoc pic(fn, 0, 0, BB * Z + 2, BB * Z + 2);
   pic.setcol(225, 225, 225);
   for (int i = 0; i < Z + 1; i++) {
@@ -308,10 +322,105 @@ double reportbest(ostream &aus, int run) {
   for (int i = 1; i < popsize; i++) {
     if (fit[i] > fit[b]) b = i;
   }
-  fit[b] = fitness(pop[b]);
+  fit[b] = fitness(*pop[b]);
   aus << "Run" << run << " fitness: " << fit[b] << endl;
   cout << "Best Fitness: " << fit[b] << endl;
   render(run);
-  pop[b].print(aus);
+  printGraph(run);
+  printBoard(run);
+  printDoors(run);
+  pop[b]->print(aus);
   return fit[b];
+}
+
+void printGraph(int run) {
+  fstream graph;
+  char fn[100];
+
+  sprintf(fn, "Output/Graphs/graph%02d.dat", run);
+  graph.open(fn, ios::out);
+  G->resetV();
+  G->write(graph);
+  cout << "Graph printed." << endl;
+  graph.close();
+}
+
+void printBoard(int run) {
+  fstream board;
+  char fn[100];
+
+  sprintf(fn, "Output/Boards/board%02d.dat", run);
+  board.open(fn, ios::out);
+  for (int i = 0; i < Z; i++) {
+    for (int j = 0; j < Z; j++) {
+      board << Bd[i][j] << " ";
+    }
+    board << endl;
+  }
+  cout << "Board printed." << endl;
+  board.close();
+}
+
+void printDoors(int run) {
+  graph *D = new graph(Rz);
+  D->empty(cnr);
+  int Bx1, Bx2, By1, By2, Orm; //boarder xs and ys
+
+  for (int rm = 0; rm < cnr; rm++) { //for each room
+    Bx1 = Rx[rm];
+    Bx2 = Rx[rm] + Dx[rm];
+    By1 = Ry[rm];
+    By2 = Ry[rm] + Dy[rm];
+    //for each cell in the room
+    for (int x = Bx1; x < Bx2; x++) {
+      for (int y = By1; y < By2; y++) {
+        if (x == Bx1 && x > 0 && Bd[x - 1][y] == 1) { //to the left
+          Orm = getRoomNm(x - 1, y);
+          if (Orm != -1 && !G->edgeP(rm, Orm)) {
+            D->add(rm, Orm);
+          }
+        }
+        if (x == Bx2 && x < Z - 1 && Bd[x + 1][y] == 1) { //to the right
+          Orm = getRoomNm(x + 1, y);
+          if (Orm != -1 && !G->edgeP(rm, Orm)) {
+            D->add(rm, Orm);
+          }
+        }
+        if (y == By1 && y > 0 && Bd[x][y - 1] == 1) { //above
+          Orm = getRoomNm(x, y - 1);
+          if (Orm != -1 && !G->edgeP(rm, Orm)) {
+            D->add(rm, Orm);
+          }
+        }
+        if (y == By2 && y < Z - 1 && Bd[x][y + 1] == 1) { //below
+          Orm = getRoomNm(x, y + 1);
+          if (Orm != -1 && !G->edgeP(rm, Orm)) {
+            D->add(rm, Orm);
+          }
+        }
+      }
+    }
+  }
+  fstream doors;
+  char fn[100];
+  sprintf(fn, "Output/Doors/doors%02d.dat", run);
+  doors.open(fn, ios::out);
+  D->write(doors);
+  cout << "Doors printed." << endl;
+  doors.close();
+}
+
+int getRoomNm(int x, int y) {
+  int Bx1, Bx2, By1, By2; //boarder xs and ys
+
+  for (int rm = 0; rm < cnr; rm++) { //for each room
+    Bx1 = Rx[rm];
+    Bx2 = Rx[rm] + Dx[rm];
+    By1 = Ry[rm];
+    By2 = Ry[rm] + Dy[rm];
+    if (Bx1 <= x && x <= Bx2 && By1 <= y && y <= By2) { //if x, y in room cells
+      return rm;
+    }
+  }
+  return -1;
 }
