@@ -1,61 +1,10 @@
-//
-// Created by micha on 2021-04-05.
-//
-
-#include <iostream>
-#include <cstdlib>
-#include <cstdio>
-#include <vector>
-
-using namespace std;
-
 #include "../BitSprayer/stat.h"
 #include "../BitSprayer/bitspray.h"
 #include "ps.h"
 #include "setu.h"
-#define RNS 91207819
+#include "Dungeon.h"
 
-#define runs 5
-#define mevs 1000
-#define RI 100
-#define popsize 100
-#define tsize 7
-#define MNM 3
-#define verbose 0
-
-#define states 12
-//#define alp 2
-//#define alt 2
-#define Qz 40000
-int Q[Qz];
-
-#define Z 80 //Board size
-int Bd[Z][Z];
-
-#define BB 10 //Grid size
-
-#define Rz 256
-int cnr;
-int Rx[Rz], Ry[Rz], Dx[Rz], Dy[Rz];
-
-void initalg();                //initialize the algorithm
-void developQ(bitspray &A);         //unpack the queue
-double fitness(bitspray &A);   //compute the fitness of an alternator
-void initpop();                //initialize a population
-void matingevent();            //run a mating event
-void report(ostream &aus);     //report current summary statistics
-void render(int run);          //render a picture
-double reportbest(ostream &aus, int run); //report current best creature
-void printGraph(int run);
-void printBoard(int run);
-int getRoomNm(int x, int y);
-void printDoors(int run);
-
-bitspray *pop[popsize];  //Population of bitsprayers
-double fit[popsize];  //Fitness values
-int dx[popsize];  //Sorting index
-
-graph *G;
+using namespace std;
 
 int main() {
   fstream stat;   //statistics reporting stream
@@ -144,7 +93,7 @@ bool available(int a, int b, int da, int db) {
   return true;
 }
 
-bool getbit(int &val, int bits, int &psn) {//get a number from the queue
+bool getnum(int &val, int bits, int &psn) {//get a number from the queue
   if (psn + bits >= Qz) return false; //safety first
   val = 0;  //zero the value
   for (int i = 0; i < bits; i++)
@@ -170,14 +119,22 @@ double fitness(bitspray &A) {
   Dx[0] = 4;          //width
   Dy[0] = 4;          //height
   fill(Rx[0], Ry[0], Dx[0], Dy[0]);
+  Rr.push_back(0); //RECENT
   cnr = 1;
   psn = 0;
-  while (cnr < Rz && getbit(rmn, 8, psn)) {
-    rmn = rmn % cnr;  //get an already created room
-    if (!getbit(side, 2, psn)) break;
-    if (!getbit(typ, 3, psn)) break;
-    if (!getbit(slide, 4, psn)) break;
-    if (!getbit(ttlz, 4, psn)) break;
+  while (cnr < Rz && getnum(rmn, Rbs, psn)) {
+//    rmn = rmn % cnr;  //get an already created room
+    //RECENT
+    if (cnr > RecRs) {
+      int extra = cnr - (int) RecRs;
+      rmn = extra + (rmn % (int) RecRs);
+    } else {
+      rmn = rmn % cnr;
+    }
+    if (!getnum(side, 2, psn)) break;
+    if (!getnum(typ, 3, psn)) break;
+    if (!getnum(slide, 4, psn)) break;
+    if (!getnum(ttlz, 4, psn)) break;
 
     if (typ == 0) {  //hallway
       if (side < 2) { //horizontal hallway
@@ -222,6 +179,7 @@ double fitness(bitspray &A) {
       G->add(rmn, cnr);
       cnr++;
     }
+
   }
   //calculate the fitness
   a = Z;

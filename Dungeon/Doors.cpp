@@ -1,68 +1,8 @@
-//
-// Created by micha on 2021-04-09.
-//
-
-#include <iostream>
-#include <cstdlib>
-#include <cstdio>
-#include <queue>
-#include <climits>
-#include <algorithm>
-#include <random>
-
-using namespace std;
-
 #include "../BitSprayer/stat.h"
 #include "../BitSprayer/bitspray.h"
 #include "setu.h"
-#define RNS 91207819
-
-#define runs 30
-#define mevs 2000
-#define RI 20
-#define popsize 100
-#define tsize 7
-#define MNM 3
-#define verbose 1
-
-#define states 12
-//#define alp 2
-//#define alt 2
-#define Qz 2000
-int Q[Qz];
-
-#define BB 10 //Grid size
-
-#define Rz 256
-#define reqDiam 20
-#define diamTests 7
-
-void initalg();
-void initpop();
-vector<pair<int, int>> BFS(graph &G, int source, int *maxs);
-int fitness(bitspray &A);
-int diameter(graph &G);
-void report(ostream &aus);
-void matingevent();
-bool getbit(int &val, int bits, int &psn);
-void randomOrder(int size);
-void fillEdges();
-int approxDiameter(graph &G);
-bool getbit(int &val, int &psn);
-int validation(bitspray &A);
-double reportbest(ostream &aus, int run);
-
-bitspray pop[popsize];  //Population of bitsprayers
-int fit[popsize];  //Fitness values
-int dx[popsize];  //Sorting index
-
-graph *initG;
-graph *curG;
-graph *D;
-int doors[1000][2];
-int posDoors;
-vector<int> order;
-bool over = false;
+#include "Doors.h"
+using namespace std;
 
 int main() {
   fstream stat;   //statistics reporting stream
@@ -70,9 +10,9 @@ int main() {
   fstream initGraph;
   fstream outGraph;
   fstream doorGraph;
-  int numDoors;
   char fn[100];
   int g = 0;
+
   sprintf(fn, "Input/Graphs/graph%02d.dat", g);
   initGraph.open(fn, ios::in);
   initG = new graph(Rz);
@@ -88,7 +28,6 @@ int main() {
   fillEdges();
 
   curG = new graph(Rz);
-
   order.reserve(posDoors);
   randomOrder(posDoors);
   best.open("Output/best.sda", ios::out);
@@ -114,9 +53,8 @@ int main() {
     reportbest(best, run);
     stat.close();
   }
-//  best.close();
-  outGraph.close();
   best.close();
+  outGraph.close();
 
   delete initG;
   delete D;
@@ -319,12 +257,12 @@ int approxDiameter(graph &G) {
 }
 
 void report(ostream &aus) {
-  dset D;
-  D.add(fit, popsize);
-  aus << D.Rmu() << " " << D.RCI95() << " " << D.Rsg() << " " << D.Rmin();
+  dset d;
+  d.add(fit, popsize);
+  aus << d.Rmu() << " " << d.RCI95() << " " << d.Rsg() << " " << d.Rmin();
   aus << endl;
   if (verbose == 1) {
-    cout << D.Rmu() << " " << D.RCI95() << " " << D.Rsg() << " " << D.Rmin();
+    cout << d.Rmu() << " " << d.RCI95() << " " << d.Rsg() << " " << d.Rmin();
     cout << endl;
   }
 }
