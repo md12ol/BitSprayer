@@ -10,32 +10,49 @@ int main() {
   fstream stat;   //statistics reporting stream
   fstream best;   //best reporting stream
   char fn[100];
+  char *outLoc = new char[45];
+  char *outRoot = new char[20];
+  sprintf(outRoot, "./Output/");
   double sum = 0.0;   //sum of best fitness from each run
   G = new graph(Rz);
+  sprintf(outLoc, "%sOutput - %02dS, %03dP, %dM/",
+          outRoot, states, popsize, MNM);
+  std::filesystem::create_directory(outLoc);
+  sprintf(fn, "%sGraphs/", outLoc);
+  std::filesystem::create_directory(fn);
+  sprintf(fn, "%sBoards/", outLoc);
+  std::filesystem::create_directory(fn);
+  sprintf(fn, "%sDoors/", outLoc);
+  std::filesystem::create_directory(fn);
+  sprintf(fn, "%sDungeons/", outLoc);
+  std::filesystem::create_directory(fn);
+
 
   initalg();
-  best.open("Output/best.sda", ios::out);
+  sprintf(fn, "%sbest.sda", outLoc);
+  best.open(fn, ios::out);
   for (int run = 0; run < runs; run++) {
-    cout << "Run=" << run << endl;
-    sprintf(fn, "Output/run%02d.dat", run);
+    sprintf(fn, "%srun%02d.dat", outLoc, run);
     stat.open(fn, ios::out);
+    if (verbose == 1) cmdLineRun(run, cout);
     initpop();
     report(stat);
     for (int mev = 0; mev < mevs; mev++) {
       matingevent();
       if ((mev + 1) % RI == 0) {
         if (verbose == 1) {
-          cout << run << " " << (mev + 1) / RI << " ";
+          cout << left << setw(5) << run;
+          cout << left << setw(4) << (mev + 1) / RI;
         }
         report(stat);
       }
     }
     stat.close();
-    sum += reportbest(best, run);
+    sum += reportbest(best, run, outLoc);
   }
   cout << "Mean fitness: " << sum / runs << endl;
   best.close();
-//  delete G;
+  delete G;
   return (0);
 }
 
@@ -55,15 +72,25 @@ void initalg() {
   }
 }
 
+void cmdLineRun(int run, ostream &aus) {
+  aus << endl << "Beginning Run " << run << " of " << runs - 1 << endl;
+  aus << left << setw(5) << "Run";
+  aus << left << setw(4) << "RI";
+  aus << left << setw(10) << "Mean";
+  aus << left << setw(12) << "95% CI";
+  aus << left << setw(10) << "SD";
+  aus << left << setw(8) << "Best";
+  aus << endl;
+  aus << left << setw(5) << run;
+  aus << left << setw(4) << "0";
+}
+
 void initpop() {
-  cout << "Initial population fitness values" << endl;
   for (int i = 0; i < popsize; i++) {
     pop[i]->randomize();
     fit[i] = fitness(*pop[i]);
-    cout << fit[i] << " ";
     dx[i] = i;
   }
-  cout << endl;
 }
 
 void clearboard() {
@@ -224,17 +251,23 @@ void matingevent() {
 void report(ostream &aus) {
   dset D;
   D.add(fit, popsize);
-  aus << D.Rmu() << " " << D.RCI95() << " " << D.Rsg() << " " << D.Rmax();
+  aus << left << setw(10) << D.Rmu();
+  aus << left << setw(12) << D.RCI95();
+  aus << left << setw(10) << D.Rsg();
+  aus << left << setw(8) << D.Rmax();
   aus << endl;
   if (verbose == 1) {
-    cout << D.Rmu() << " " << D.RCI95() << " " << D.Rsg() << " " << D.Rmax();
+    cout << left << setw(10) << D.Rmu();
+    cout << left << setw(12) << D.RCI95();
+    cout << left << setw(10) << D.Rsg();
+    cout << left << setw(8) << D.Rmax();
     cout << endl;
   }
 }
 
-void render(int run) {
+void render(int run, char *outLoc) {
   char fn[60];
-  sprintf(fn, "Output/Dungeons/Dungeon%02d.eps", run);
+  sprintf(fn, "%sDungeons/Dungeon%02d.eps", outLoc, run);
   psDoc pic(fn, 0, 0, BB * Z + 2, BB * Z + 2);
   pic.setcol(225, 225, 225);
   for (int i = 0; i < Z + 1; i++) {
@@ -275,27 +308,27 @@ void render(int run) {
   }
 }
 
-double reportbest(ostream &aus, int run) {
+double reportbest(ostream &aus, int run, char *outLoc) {
   int b = 0;
   for (int i = 1; i < popsize; i++) {
     if (fit[i] > fit[b]) b = i;
   }
   fit[b] = fitness(*pop[b]);
   aus << "Run" << run << " fitness: " << fit[b] << endl;
-  cout << "Best Fitness: " << fit[b] << endl;
-  render(run);
-  printGraph(run);
-  printBoard(run);
-  printDoors(run);
+  if (verbose == 1) cout << "Best Fitness: " << fit[b] << endl;
+  render(run, outLoc);
+  printGraph(run, outLoc);
+  printBoard(run, outLoc);
+  printDoors(run, outLoc);
   pop[b]->print(aus);
   return fit[b];
 }
 
-void printGraph(int run) {
+void printGraph(int run, char *outLoc) {
   fstream graph;
   char fn[100];
 
-  sprintf(fn, "Output/Graphs/graph%02d.dat", run);
+  sprintf(fn, "%sGraphs/graph%02d.dat", outLoc, run);
   graph.open(fn, ios::out);
   G->resetV();
   G->write(graph);
@@ -303,11 +336,11 @@ void printGraph(int run) {
   graph.close();
 }
 
-void printBoard(int run) {
+void printBoard(int run, char *outLoc) {
   fstream board;
   char fn[100];
 
-  sprintf(fn, "Output/Boards/board%02d.dat", run);
+  sprintf(fn, "%sBoards/board%02d.dat", outLoc, run);
   board.open(fn, ios::out);
   for (int i = 0; i < Z; i++) {
     for (int j = 0; j < Z; j++) {
@@ -319,7 +352,7 @@ void printBoard(int run) {
   board.close();
 }
 
-void printDoors(int run) {
+void printDoors(int run, char *outLoc) {
   graph *D = new graph(Rz);
   D->empty(cnr);
   int Bx1, Bx2, By1, By2, Orm; //boarder xs and ys
@@ -361,7 +394,7 @@ void printDoors(int run) {
   }
   fstream doors;
   char fn[100];
-  sprintf(fn, "Output/Doors/doors%02d.dat", run);
+  sprintf(fn, "%sDoors/doors%02d.dat", outLoc, run);
   doors.open(fn, ios::out);
   D->write(doors);
   cout << "Doors printed." << endl;

@@ -4,15 +4,17 @@
 #include <vector>
 #include <list>
 #include <cmath>
+#include <filesystem>
+#include <iomanip>
 
 #define RNS 91207819
 #define runs 30
 #define mevs 10000
-#define RI 100
-#define popsize 36
-#define tsize 5
+#define RI (long)(mevs/100)
+#define popsize 24
+#define tsize 7
 #define MNM 2
-#define verbose 0
+#define verbose 1
 
 #define states 12
 #define Qz 100000
@@ -37,12 +39,14 @@ double fitness(bitspray &A);   //compute the fitness of an alternator
 void initpop();                //initialize a population
 void matingevent();            //run a mating event
 void report(ostream &aus);     //report current summary statistics
-void render(int run);          //render a picture
-double reportbest(ostream &aus, int run); //report current best creature
-void printGraph(int run);
-void printBoard(int run);
+void render(int run, char *outLoc);          //render a picture
+double
+reportbest(ostream &aus, int run, char *outLoc); //report current best creature
+void printGraph(int run, char *outLoc);
+void printBoard(int run, char *outLoc);
 int getRoomNm(int x, int y);
-void printDoors(int run);
+void printDoors(int run, char *outLoc);
+void cmdLineRun(int run, ostream &aus);
 
 bitspray *pop[popsize];  //Population of bitsprayers
 double fit[popsize];  //Fitness values

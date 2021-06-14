@@ -32,6 +32,8 @@ int main() {
   randomOrder(posDoors);
   best.open("Output/best.sda", ios::out);
 
+  bestD = bestDiam();
+
 //  sprintf(fn, "Output/newg%02d.dat", g);
 //  outGraph.open(fn, ios::out);
   initalg();
@@ -82,6 +84,7 @@ void initalg() {
 
 void initpop() {
   cout << "Initial population fitness values" << std::endl;
+  cout << "Best D is " << bestD << std::endl;
   for (int i = 0; i < popsize; i++) {
     pop[i].randomize();
     fit[i] = fitness(pop[i]);
@@ -108,11 +111,20 @@ bool necroticFilter() {
     }
   }
   double ratio = (double) count / (double) Qz;
-  if (ratio < 0.5 || ratio > 0.9) {
+  if (ratio < 0.1 || ratio > 0.9) {
     return true;
   } else {
     return false;
   }
+}
+
+int bestDiam() {
+  curG->empty(Rz);
+  curG->copy(*initG);
+  for (int i = 0; i < posDoors; i++) {
+    curG->add(doors[i][0], doors[i][1]);
+  }
+  return diameter(*curG);
 }
 
 int fitness(bitspray &A) {

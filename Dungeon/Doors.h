@@ -8,21 +8,21 @@
 
 #define RNS 91207819
 #define runs 30
-#define mevs 2000
-#define RI 20
+#define mevs 500
+#define RI 5
 #define popsize 100
 #define tsize 7
-#define MNM 3
+#define MNM 2
 #define verbose 1
 
-#define states 12
+#define states 16
 #define Qz 2000
 int Q[Qz];
 
 #define BB 10 //Grid size
 #define Rz 256
-#define reqDiam 20
-#define diamTests 7
+#define reqDiam 35
+#define diamTests 3
 
 void initalg();
 void initpop();
@@ -38,6 +38,7 @@ int approxDiameter(graph &G);
 bool getbit(int &val, int &psn);
 int validation(bitspray &A);
 double reportbest(ostream &aus, int run);
+int bestDiam();
 
 bitspray pop[popsize];  //Population of bitsprayers
 int fit[popsize];  //Fitness values
@@ -50,3 +51,4 @@ int doors[1000][2];
 int posDoors;
 vector<int> order;
 bool over = false;
+int bestD = -1;
