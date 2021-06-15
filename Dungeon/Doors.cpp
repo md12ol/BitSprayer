@@ -11,15 +11,23 @@ int main() {
   fstream outGraph;
   fstream doorGraph;
   char fn[100];
-  int g = 0;
+  char *outLoc = new char[45];
+  char *outRoot = new char[20];
+  sprintf(outRoot, "./DoorOut/");
+  sprintf(outLoc, "%sOutput - %02dS, %02dP, %dM/",
+          outRoot, states, popsize, MNM);
+  std::filesystem::create_directory(outLoc);
+  int g = 0;  // TODO: Use or remove
 
-  sprintf(fn, "Input/Graphs/graph%02d.dat", g);
+//  sprintf(fn, "Input/Graphs/graph%02d.dat", g);
+  sprintf(fn, "Input/graph.dat"); // TODO: Update
   initGraph.open(fn, ios::in);
   initG = new graph(Rz);
   initG->read(initGraph);
   initGraph.close();
 
-  sprintf(fn, "Input/Doors/doors%02d.dat", g);
+//  sprintf(fn, "Input/Doors/doors%02d.dat", g);
+  sprintf(fn, "Input/doors.dat"); // TODO: Update
   doorGraph.open(fn, ios::in);
   D = new graph(Rz);
   D->read(doorGraph);
@@ -30,24 +38,27 @@ int main() {
   curG = new graph(Rz);
   order.reserve(posDoors);
   randomOrder(posDoors);
-  best.open("Output/best.sda", ios::out);
+  sprintf(fn, "%sbest.sda", outLoc);
+  best.open(fn, ios::out);
 
+  startD = diameter(initG);
   bestD = bestDiam();
 
 //  sprintf(fn, "Output/newg%02d.dat", g);
 //  outGraph.open(fn, ios::out);
   initalg();
   for (int run = 0; run < runs; run++) {
-    cout << "Run=" << run << endl;
-    sprintf(fn, "Output/run%02d.dat", run);
+    sprintf(fn, "%srun%02d.dat", outLoc, run);
     stat.open(fn, ios::out);
+    if (verbose) cmdLineRun(run, cout);
     initpop();
     report(stat);
     for (int mev = 0; mev < mevs; mev++) {
       matingevent();
       if ((mev + 1) % RI == 0) {
-        if (verbose == 1) {
-          cout << run << " " << (mev + 1) / RI << " ";
+        if (verbose) {
+          cout << left << setw(5) << run;
+          cout << left << setw(4) << (mev + 1) / RI;
         }
         report(stat);
       }
@@ -62,6 +73,27 @@ int main() {
   delete D;
   delete curG;
   return 0;
+}
+
+void cmdLineIntro(ostream &aus) {
+  aus << "Dungeon with Doors Generator." << endl;
+  aus << "Starting Dungeon Diameter: " << startD << endl;
+  aus << "Best Dungeon Diameter Possible: " << bestD << endl;
+//  aus << "Check readme.dat for more information about parameters/output.";
+//  aus << endl;
+}
+
+void cmdLineRun(int run, ostream &aus) {
+  aus << endl << "Beginning Run " << run << " of " << runs - 1 << endl;
+  aus << left << setw(5) << "Run";
+  aus << left << setw(4) << "RI";
+  aus << left << setw(10) << "Mean";
+  aus << left << setw(12) << "95% CI";
+  aus << left << setw(10) << "SD";
+  aus << left << setw(8) << "Best";
+  aus << endl;
+  aus << left << setw(5) << run;
+  aus << left << setw(4) << "0";
 }
 
 void randomOrder(int size) {
@@ -269,12 +301,18 @@ int approxDiameter(graph &G) {
 }
 
 void report(ostream &aus) {
-  dset d;
-  d.add(fit, popsize);
-  aus << d.Rmu() << " " << d.RCI95() << " " << d.Rsg() << " " << d.Rmin();
+  dset D;
+  D.add(fit, popsize);
+  aus << left << setw(10) << D.Rmu();
+  aus << left << setw(12) << D.RCI95();
+  aus << left << setw(10) << D.Rsg();
+  aus << left << setw(8) << D.Rmin();
   aus << endl;
-  if (verbose == 1) {
-    cout << d.Rmu() << " " << d.RCI95() << " " << d.Rsg() << " " << d.Rmin();
+  if (verbose) {
+    cout << left << setw(10) << D.Rmu();
+    cout << left << setw(12) << D.RCI95();
+    cout << left << setw(10) << D.Rsg();
+    cout << left << setw(8) << D.Rmin();
     cout << endl;
   }
 }

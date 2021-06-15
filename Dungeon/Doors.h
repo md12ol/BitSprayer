@@ -5,15 +5,16 @@
 #include <climits>
 #include <algorithm>
 #include <random>
+#include <filesystem>
 
 #define RNS 91207819
 #define runs 30
 #define mevs 500
-#define RI 5
-#define popsize 100
+#define RI (long)(mevs/100)
+#define popsize 24
 #define tsize 7
 #define MNM 2
-#define verbose 1
+#define verbose true
 
 #define states 16
 #define Qz 2000
@@ -39,6 +40,8 @@ bool getbit(int &val, int &psn);
 int validation(bitspray &A);
 double reportbest(ostream &aus, int run);
 int bestDiam();
+void cmdLineRun(int run, ostream &aus);
+void cmdLineIntro(ostream &aus);
 
 bitspray pop[popsize];  //Population of bitsprayers
 int fit[popsize];  //Fitness values
@@ -51,4 +54,5 @@ int doors[1000][2];
 int posDoors;
 vector<int> order;
 bool over = false;
+int startD = -1;
 int bestD = -1;

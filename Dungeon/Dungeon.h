@@ -11,12 +11,12 @@
 #define runs 30
 #define mevs 10000
 #define RI (long)(mevs/100)
-#define popsize 24
+#define popsize 48
 #define tsize 7
 #define MNM 2
 #define verbose 1
 
-#define states 12
+#define states 16
 #define Qz 100000
 int Q[Qz];
 
