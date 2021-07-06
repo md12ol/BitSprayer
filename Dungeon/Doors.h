@@ -11,7 +11,7 @@
 #define runs 30
 #define mevs 500
 #define RI (long)(mevs/100)
-#define popsize 24
+#define popsize 64
 #define tsize 7
 #define MNM 2
 #define verbose true
@@ -21,7 +21,7 @@
 int Q[Qz];
 
 #define BB 10 //Grid size
-#define Rz 256
+#define Rz 512
 #define reqDiam 35
 #define diamTests 3
 
@@ -41,14 +41,14 @@ int validation(bitspray &A);
 double reportbest(ostream &aus, int run);
 int bestDiam();
 void cmdLineRun(int run, ostream &aus);
-void cmdLineIntro(ostream &aus);
+void cmdLineIntro(ostream &aus, int g);
 
 bitspray pop[popsize];  //Population of bitsprayers
 int fit[popsize];  //Fitness values
 int dx[popsize];  //Sorting index
 
 graph *initG;
-graph *curG;
+graph *G;
 graph *D;
 int doors[1000][2];
 int posDoors;
