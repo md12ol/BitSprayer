@@ -26,7 +26,8 @@ int main() {
     std::filesystem::create_directory(fn);
     sprintf(fn, "%sDungeons/", outLoc);
     std::filesystem::create_directory(fn);
-
+    sprintf(fn, "%sRooms/", outLoc);
+    std::filesystem::create_directory(fn);
 
     initalg();
     sprintf(fn, "%sbest.sda", outLoc);
@@ -320,6 +321,7 @@ double reportbest(ostream &aus, int run, char *outLoc) {
     printGraph(run, outLoc);
     printBoard(run, outLoc);
     printDoors(run, outLoc);
+    printRooms(run, outLoc);
     pop[b]->print(aus);
     return fit[b];
 }
@@ -399,6 +401,20 @@ void printDoors(int run, char *outLoc) {
     D->write(doors);
     cout << "Doors printed." << endl;
     doors.close();
+}
+
+void printRooms(int run, char *outLoc) {
+    fstream rooms;
+    char fn[100];
+    sprintf(fn, "%sRooms/rooms%02d.dat", outLoc, run);
+    rooms.open(fn, ios::out);
+    rooms << cnr << endl;
+    for (int r = 0; r < cnr; r++) {
+        rooms << Rx[r] << '\t' << Ry[r] << '\t' << Dx[r] << '\t' << Dy[r]
+              << endl;
+    }
+    cout << "Rooms printed." << endl;
+    rooms.close();
 }
 
 int getRoomNm(int x, int y) {

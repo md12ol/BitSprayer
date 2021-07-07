@@ -10,6 +10,7 @@ int main() {
     fstream initGraph;
     fstream outGraph;
     fstream doorGraph;
+    fstream roomData;
     char fn[100];
     char *outLoc = new char[45];
     char *outRoot = new char[20];
@@ -34,6 +35,11 @@ int main() {
         posDoors = D->edges();
         fillEdges();
 
+        sprintf(fn, "./Input/rooms%d.dat", gNum);
+        roomData.open(fn, ios::in);
+        getRooms(roomData);
+        roomData.close();
+
         G = new graph(Rz);
         order.reserve(posDoors);
         randomOrder(posDoors);
@@ -44,15 +50,14 @@ int main() {
         bestD = bestDiam();
         cmdLineIntro(cout, gNum);
 
-        //  sprintf(fn, "Output/newg%02d.dat", g);
         //  outGraph.open(fn, ios::out);
         initalg();
 
         for (int run = 0; run < runs; run++) {
             sprintf(fn, "%srun%02d.dat", outLoc, run);
             stat.open(fn, ios::out);
+            initpop(run);
             if (verbose) cmdLineRun(run, cout);
-            initpop();
             report(stat);
             for (int mev = 0; mev < mevs; mev++) {
                 matingevent();
@@ -64,7 +69,8 @@ int main() {
                     report(stat);
                 }
             }
-            reportbest(best, run);
+            reportbest(best, run, outLoc);
+            approxTest();
             stat.close();
         }
         best.close();
@@ -76,17 +82,50 @@ int main() {
     return 0;
 }
 
+void getRooms(fstream rmData) {
+    char buf[1000];
+    int xin, yin, dxin, dyin, k, rms;
+
+    rmData.getline(buf, 999);
+    rms = atoi(buf);
+
+    for (int rm = 0; rm < rms; rm++) {
+        xin = atoi(buf);
+        k = 0;
+        while (buf[k] != ' ')k++;
+        while (buf[k] == ' ')k++;
+        yin = atoi(buf + k);
+        while (buf[k] != ' ')k++;
+        while (buf[k] == ' ')k++;
+        dxin = atoi(buf + k);
+        while (buf[k] != ' ')k++;
+        while (buf[k] == ' ')k++;
+        dyin = atoi(buf + k);
+
+        Rx[rm] = xin;
+        Ry[rm] = yin;
+        Dx[rm] = dxin;
+        Dy[rm] = dyin;
+    }
+}
+
+//  Monte carlo tree search
+//  Removing doors rather than adding
+//  Pre-compute the peripherial vertices (use for approx diam)
+//  Difference in diameter is a good time to do validation check
+//  Atrium phd thesis andrew mcguiness guelph
+
 void cmdLineIntro(ostream &aus, int g) {
     aus << "Dungeon with Doors Generator." << endl;
     aus << "Starting Dungeon: " << g << endl;
     aus << "Starting Dungeon Diameter: " << startD << endl;
     aus << "Best Dungeon Diameter Possible: " << bestD << endl;
+    aus << "Maximum Doors to Add (fitness): " << posDoors << endl;
 //  aus << "Check readme.dat for more information about parameters/output.";
 //  aus << endl;
 }
 
 void cmdLineRun(int run, ostream &aus) {
-    aus << endl << "Beginning Run " << run << " of " << runs - 1 << endl;
     aus << left << setw(5) << "Run";
     aus << left << setw(4) << "RI";
     aus << left << setw(10) << "Mean";
@@ -103,10 +142,6 @@ void randomOrder(int size) {
         order.push_back(i);
     }
     shuffle(order.begin(), order.end(), default_random_engine(RNS));
-//  for (int i = 0; i < size; i++) {
-//    cout << order[i] << " ";
-//  }
-//  cout << endl;
 }
 
 void initalg() {
@@ -116,9 +151,9 @@ void initalg() {
     }
 }
 
-void initpop() {
+void initpop(int run) {
+    cout << endl << "Beginning Run " << run << " of " << runs - 1 << endl;
     cout << "Initial population fitness values" << std::endl;
-    cout << "Best D is " << bestD << std::endl;
     for (int i = 0; i < popsize; i++) {
         pop[i].randomize();
         fit[i] = fitness(pop[i]);
@@ -319,9 +354,20 @@ void report(ostream &aus) {
         cout << left << setw(8) << D.Rmin();
         cout << endl;
     }
+
 }
 
-double reportbest(ostream &aus, int run) {
+void approxTest() {
+    cout << "Begin Approx Test" << endl;
+    cout << "App" << '\t' << "Act" << endl;
+    for (int i = 0; i < popsize; i++) {
+        cout << fit[i] << '\t';
+        cout << validation(pop[i]) << endl;
+    }
+    cout << "End Approx Test" << endl;
+}
+
+double reportbest(ostream &aus, int run, char *outLoc) {
     int b = 0;
     for (int i = 1; i < popsize; i++) {
         if (fit[i] < fit[b]) b = i;
@@ -331,11 +377,21 @@ double reportbest(ostream &aus, int run) {
     aus << "Run" << run << " fitness: " << fit[b] << endl;
     cout << "Best Fitness: " << fit[b] << endl;
 //  render(run);
-//  printGraph(run);
-//  printBoard(run);
-//  printDoors(run);
-//  pop[b]->print(aus);
+    printGraph(run, outLoc);
+    pop[b].print(aus);
     return fit[b];
+}
+
+void printGraph(int run, char *outLoc) {
+    fstream graph;
+    char fn[100];
+
+    sprintf(fn, "%sgraph%02d.dat", outLoc, run);
+    graph.open(fn, ios::out);
+    G->resetV();
+    G->write(graph);
+    cout << "Graph printed." << endl;
+    graph.close();
 }
 
 void matingevent() {

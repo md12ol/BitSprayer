@@ -47,6 +47,7 @@ void printBoard(int run, char *outLoc);
 int getRoomNm(int x, int y);
 void printDoors(int run, char *outLoc);
 void cmdLineRun(int run, ostream &aus);
+void printRooms(int run, char *outLoc);
 
 bitspray *pop[popsize];  //Population of bitsprayers
 double fit[popsize];  //Fitness values
