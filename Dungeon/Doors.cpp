@@ -82,7 +82,7 @@ int main() {
     return 0;
 }
 
-void getRooms(fstream rmData) {
+void getRooms(fstream &rmData) {
     char buf[1000];
     int xin, yin, dxin, dyin, k, rms;
 

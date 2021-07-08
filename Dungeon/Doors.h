@@ -52,7 +52,7 @@ void cmdLineRun(int run, ostream &aus);
 void cmdLineIntro(ostream &aus, int g);
 void printGraph(int run, char *outLoc);
 void approxTest();
-void getRooms(fstream rmData);
+void getRooms(fstream &rmData);
 
 bitspray pop[popsize];  //Population of bitsprayers
 int fit[popsize];  //Fitness values
