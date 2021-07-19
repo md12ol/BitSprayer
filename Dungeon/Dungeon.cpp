@@ -12,7 +12,7 @@ int main() {
     char fn[100];
     char *outLoc = new char[45];
     char *outRoot = new char[20];
-    sprintf(outRoot, "./Output/");
+    sprintf(outRoot, "./DungeonOut/");
     double sum = 0.0;   //sum of best fitness from each run
     G = new graph(Rz);
     sprintf(outLoc, "%sOutput - %02dS, %03dP, %dM/",
@@ -51,7 +51,7 @@ int main() {
         stat.close();
         sum += reportbest(best, run, outLoc);
     }
-    cout << "Mean fitness: " << sum / runs << endl;
+    cout << "Mean old_fitness: " << sum / runs << endl;
     best.close();
     delete G;
     return (0);
@@ -315,7 +315,7 @@ double reportbest(ostream &aus, int run, char *outLoc) {
         if (fit[i] > fit[b]) b = i;
     }
     fit[b] = fitness(*pop[b]);
-    aus << "Run" << run << " fitness: " << fit[b] << endl;
+    aus << "Run" << run << " old_fitness: " << fit[b] << endl;
     if (verbose == 1) cout << "Best Fitness: " << fit[b] << endl;
     render(run, outLoc);
     printGraph(run, outLoc);
