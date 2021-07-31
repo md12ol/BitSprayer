@@ -33,15 +33,15 @@ int Rx[Rz], Ry[Rz], Dx[Rz], Dy[Rz];
 #define RecRs pow(2,Rbs)
 vector<int> Rr;
 
-void initalg();                //initialize the algorithm
-void developQ(bitspray &A);         //unpack the queue
+void initAlg();                //initialize the algorithm
+void developQ(bitspray &a);         //unpack the queue
 double fitness(bitspray &A);   //compute the fitness of an alternator
 void initpop();                //initialize a population
 void matingevent();            //run a mating event
 void report(ostream &aus);     //report current summary statistics
 void render(int run, char *outLoc);          //render a picture
 double
-reportbest(ostream &aus, int run, char *outLoc); //report current best creature
+reportBest(ostream &aus, int run, char *outLoc); //report current best creature
 void printGraph(int run, char *outLoc);
 void printBoard(int run, char *outLoc);
 int getRoomNm(int x, int y);

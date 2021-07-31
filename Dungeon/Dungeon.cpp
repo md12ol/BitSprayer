@@ -29,7 +29,7 @@ int main() {
     sprintf(fn, "%sRooms/", outLoc);
     std::filesystem::create_directory(fn);
 
-    initalg();
+    initAlg();
     sprintf(fn, "%sbest.sda", outLoc);
     best.open(fn, ios::out);
     for (int run = 0; run < runs; run++) {
@@ -49,7 +49,7 @@ int main() {
             }
         }
         stat.close();
-        sum += reportbest(best, run, outLoc);
+        sum += reportBest(best, run, outLoc);
     }
     cout << "Mean old_fitness: " << sum / runs << endl;
     best.close();
@@ -66,7 +66,7 @@ void developQ(bitspray &A) {//unpack the queue
     while (t < Qz - 2)A.next(Q, h, t, Qz);  //run the automata
 }
 
-void initalg() {
+void initAlg() {
     srand48(RNS);
     for (int i = 0; i < popsize; i++) {
         pop[i] = new bitspray(states);
@@ -309,7 +309,7 @@ void render(int run, char *outLoc) {
     }
 }
 
-double reportbest(ostream &aus, int run, char *outLoc) {
+double reportBest(ostream &aus, int run, char *outLoc) {
     int b = 0;
     for (int i = 1; i < popsize; i++) {
         if (fit[i] > fit[b]) b = i;
