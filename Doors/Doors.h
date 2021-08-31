@@ -8,8 +8,8 @@
 #include <filesystem>
 #include <bits/stdc++.h>
 
-#define verbose true
-#define RNS 91207819
+#define verbose false
+#define RNS 91204658
 
 // GA Parameters
 #define runs 30

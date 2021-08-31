@@ -21,77 +21,79 @@ int main(int argc, char *argv[]) {
     states = (int) strtol(argv[1], &end, 10);
     popsize = (int) strtol(argv[2], &end, 10);
     MNM = (int) strtol(argv[3], &end, 10);
+    int gNum = (int) strtol(argv[4], &end, 10);
 
     pop = new bitspray[popsize];
     dfit = new int[popsize];
     efit = new int[popsize];
     dx = new int[popsize];
 
-    for (int gNum = 1; gNum <= 3; gNum++) {
-        sprintf(outLoc, "%sG%d Output - %02dS, %02dP, %dM/",
-                outRoot, gNum, states, popsize, MNM);
-        std::filesystem::create_directory(outLoc);
+    sprintf(outLoc, "%sG%d Output - %02dS, %02dP, %dM/",
+            outRoot, gNum, states, popsize, MNM);
+    std::filesystem::create_directory(outLoc);
 
-        sprintf(fn, "./Input/graph%d.dat", gNum);
-        initGraph.open(fn, ios::in);
-        initG = new graph(Rz);
-        initG->read(initGraph);
-        initGraph.close();
+    sprintf(fn, "./Input/graph%d.dat", gNum);
+    initGraph.open(fn, ios::in);
+    initG = new graph(Rz);
+    initG->read(initGraph);
+    initGraph.close();
 
-        sprintf(fn, "./Input/doors%d.dat", gNum);
-        doorGraph.open(fn, ios::in);
-        D = new graph(Rz);
-        D->read(doorGraph);
-        doorGraph.close();
-        posDoors = D->edges();
-        fillEdges();
-        Qz = posDoors;
-        Q = new int[Qz];
+    sprintf(fn, "./Input/doors%d.dat", gNum);
+    doorGraph.open(fn, ios::in);
+    D = new graph(Rz);
+    D->read(doorGraph);
+    doorGraph.close();
+    posDoors = D->edges();
+    fillEdges();
+    Qz = posDoors;
+    Q = new int[Qz];
 
-        sprintf(fn, "./Input/rooms%d.dat", gNum);
-        roomData.open(fn, ios::in);
-        getRooms(roomData);
-        roomData.close();
+    sprintf(fn, "./Input/rooms%d.dat", gNum);
+    roomData.open(fn, ios::in);
+    getRooms(roomData);
+    roomData.close();
 
-        G = new graph(Rz);
-        order.reserve(posDoors);
-        randomOrder(posDoors);
+    G = new graph(Rz);
+    order.reserve(posDoors);
+    randomOrder(posDoors);
+    G->copy(*initG);
+    render(31, outLoc);
 
-        sprintf(fn, "%sbest.sda", outLoc);
-        best.open(fn, ios::out);
+    sprintf(fn, "%sbest.sda", outLoc);
+    best.open(fn, ios::out);
 
-        startD = diameter(*initG);
-        bestD = bestDiam();
-        cmdLineIntro(cout, gNum);
-        initAlg();
+    startD = diameter(*initG);
+    bestD = bestDiam();
+    cmdLineIntro(cout, gNum);
+    initAlg();
 
-        for (int run = 0; run < runs; run++) {
-            sprintf(fn, "%srun%02d.dat", outLoc, run);
-            stat.open(fn, ios::out);
-            initPop(run);
-            if (verbose) cmdLineRun(run, cout);
-            report(stat);
-            for (int mev = 0; mev < mevs; mev++) {
-                matingevent();
-                if ((mev + 1) % RI == 0) {
-                    if ((mev + 1) % VI == 0) {
-                        actualFitnessUpdate(stat);
-                    }
-                    stat << endl;
-                    if (verbose) {
-                        cout << left << setw(5) << run;
-                        cout << left << setw(4) << (mev + 1) / RI;
-                    }
-                    report(stat);
+    for (int run = 0; run < runs; run++) {
+        sprintf(fn, "%srun%02d.dat", outLoc, run);
+        stat.open(fn, ios::out);
+        initPop(run);
+        if (verbose) cmdLineRun(run, cout);
+        report(stat);
+        for (int mev = 0; mev < mevs; mev++) {
+            matingevent();
+            if ((mev + 1) % RI == 0) {
+                if ((mev + 1) % VI == 0) {
+                    actualFitnessUpdate(stat);
                 }
+                stat << endl;
+                if (verbose) {
+                    cout << left << setw(5) << run;
+                    cout << left << setw(4) << (mev + 1) / RI;
+                }
+                report(stat);
             }
-            reportBest(best, run, outLoc);
-            stat.close();
         }
-        best.close();
-        outGraph.close();
-        cout << endl;
+        reportBest(best, run, outLoc);
+        stat.close();
     }
+    best.close();
+    outGraph.close();
+    cout << endl;
+
     delete initG;
     delete D;
     delete G;
@@ -100,6 +102,11 @@ int main(int argc, char *argv[]) {
     delete[] dfit;
     delete[] efit;
     delete[] dx;
+    delete[] outRoot;
+    delete[] outLoc;
+    for (int i = 0; i < popsize; i++) {
+        pop[i].destroy();
+    }
     return 0;
 }
 
@@ -188,7 +195,9 @@ void initPop(int run) {
         cout << "[" << dfit[i] << ", " << efit[i] << "] ";
         dx[i] = i;
     }
-    vector<pair<int, int>> bests = getBests();
+    vector<pair<int, int>> bests;
+    bests.reserve(popsize);
+    bests = getBests();
     actBest = bests.front().first;
     cout << endl;
 }
@@ -265,8 +274,9 @@ void actualFitnessUpdate(ostream &aus) {
     ddat.add(dfit, popsize);
     edat.add(efit, popsize);
     cout << " --> " << ddat.Rmu() << ", " << edat.Rmu() << endl;
-    aus << "-->" << ddat.Rmu() << ", " << edat.Rmu() << endl;
+    aus << "-->" << ddat.Rmu() << ", " << edat.Rmu();
     vector<pair<int, int>> bests = getBests();
+    bests.reserve(popsize);
     if (actBest != bests.front().first) {
         actBest = bests.front().first;
     }
@@ -369,7 +379,9 @@ int approxDiameter(graph &graph) {
     int from = 0;
     int nextF;
     vector<int> tested;
+    tested.reserve(diamTests);
     vector<pair<int, int>> so;
+    so.reserve(diamTests);
     for (int &max : maxs) {
         max = 0;
         tested.push_back(from);
@@ -493,20 +505,23 @@ void report(ostream &aus) {
         cout << left << printPair(bestIdx);
         cout << endl;
     }
+    pair<int, int> tfits = fitness(pop[bestIdx], true);
     if (bestIdx != actBest) {
-        pair<int, int> tfits = fitness(pop[bestIdx], true);
         pair<int, int> bfits = fitness(pop[actBest], true);
-        if (tfits.first < bfits.first) {
-            actBest = bestIdx;
-        } else if (tfits.first == bfits.first && tfits.second < bfits.second) {
+        if (tfits.first <= bfits.first && tfits.second <= bfits.second) {
             actBest = bestIdx;
         }
+    } else {
+        dfit[bestIdx] = tfits.first;
+        efit[bestIdx] = tfits.second;
     }
 }
 
 string reportBest(ostream &aus, int run, char *outLoc) {
     int b = 0;
-    vector<pair<int, int>> bests = getBests();
+    vector<pair<int, int>> bests;
+    bests.reserve(popsize);
+    bests = getBests();
     int bestIdx = bests.front().first;
     cout << "Best Approx Fitness: " << printPair(bestIdx) << endl;
     aus << "Run" << run << " Approx Fitness: " << printPair(bestIdx) << endl;
@@ -687,7 +702,8 @@ pair<pair<int, int>, pair<int, int>> getOverlap(int r1, int r2) {
     }
     start = make_pair(sx, sy);
     end = make_pair(ex, ey);
-    return make_pair(start, end);
+    pair<pair<int, int>, pair<int, int>> rtn = make_pair(start, end);
+    return rtn;
 }
 
 void printGraph(int run, char *outLoc) {
